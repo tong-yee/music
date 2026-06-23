@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>100首最熱廣東歌</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #111; color: #eee;
+  }
+  /* ── Player section ── */
+  #player-section {
+    background: #000;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 20px 16px 12px;
+    position: sticky; top: 0; z-index: 10;
+    box-shadow: 0 4px 20px rgba(0,0,0,.8);
+  }
+  #player-title {
+    font-size: 1rem; color: #fff; margin-bottom: 10px;
+    text-align: center; max-width: 640px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #player-wrapper {
+    width: 100%; max-width: 640px; aspect-ratio: 16/9;
+    position: relative; border-radius: 6px; overflow: hidden;
+    background: #000; transition: all .3s ease;
+  }
+  #player-wrapper.hidden-video {
+    aspect-ratio: unset; height: 0; overflow: hidden; margin: 0;
+  }
+  #ytplayer {
+    width: 100%; height: 100%;
+    border: none;
+  }
+  /* Error 153 overlay */
+  #error-overlay {
+    display: none;
+    position: absolute; inset: 0;
+    background: #1a1a1a;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px; text-align: center; padding: 20px;
+  }
+  #error-overlay.visible { display: flex; }
+  #error-overlay p { color: #aaa; font-size: .95rem; }
+  #btn-watch-yt {
+    padding: 10px 24px; border: none; border-radius: 20px;
+    background: #f00; color: #fff; font-size: 1rem;
+    cursor: pointer; font-family: inherit;
+    text-decoration: none; display: inline-block;
+  }
+  #btn-watch-yt:hover { background: #c00; }
+  #btn-skip-error {
+    padding: 8px 20px; border: 1px solid #555; border-radius: 20px;
+    background: transparent; color: #aaa; font-size: .85rem;
+    cursor: pointer; font-family: inherit;
+  }
+  #btn-skip-error:hover { background: #333; }
+  #controls {
+    display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap;
+    justify-content: center;
+  }
+  #controls button {
+    padding: 8px 18px; border: none; border-radius: 20px;
+    font-size: .9rem; cursor: pointer; font-family: inherit;
+    transition: background .2s;
+  }
+  #btn-prev  { background: #333; color: #eee; }
+  #btn-next  { background: #333; color: #eee; }
+  #btn-order { background: #c00; color: #fff; }
+  #btn-shuffle { background: #333; color: #eee; }
+  #btn-toggle-video { background: #333; color: #eee; }
+  #btn-toggle-video.active { background: #c00; color: #fff; }
+  #controls button:hover { filter: brightness(1.3); }
+  #mode-label {
+    font-size: .78rem; color: #aaa; align-self: center;
+  }
+  /* ── Song list ── */
+  #song-list {
+    max-width: 760px; margin: 24px auto; padding: 0 12px 40px;
+  }
+  h1 {
+    text-align: center; font-size: 1.6rem; color: #f44;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    text-align: center; color: #888; font-size: .85rem; margin-bottom: 20px;
+  }
+  .song-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 8px;
+    cursor: pointer; transition: background .15s;
+    border-bottom: 1px solid #222;
+  }
+  .song-card:hover  { background: #1e1e1e; }
+  .song-card.active { background: #1a0000; border-left: 3px solid #f44; }
+  .rank {
+    width: 28px; text-align: right; font-size: .85rem;
+    color: #666; flex-shrink: 0;
+  }
+  .song-card.active .rank { color: #f44; font-weight: bold; }
+  .thumb {
+    width: 72px; height: 54px; object-fit: cover;
+    border-radius: 4px; flex-shrink: 0;
+  }
+  .no-thumb {
+    width: 72px; height: 54px; background: #333;
+    border-radius: 4px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; color: #666;
+  }
+  .song-info { flex: 1; min-width: 0; }
+  .song-title {
+    font-size: .95rem; color: #eee;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .song-card.active .song-title { color: #f77; }
+  .song-meta { font-size: .75rem; color: #777; margin-top: 3px; }
+</style>
+</head>
+<body>
+<div id="player-section">
+  <div id="player-title">點擊歌曲開始播放</div>
+  <div id="player-wrapper">
+    <div id="ytplayer"></div>
+    <div id="error-overlay">
+      <p>⚠️ 此影片已停用內嵌播放<br>請前往 YouTube 觀看</p>
+      <a id="btn-watch-yt" href="#" target="_blank" rel="noopener">▶ 在 YouTube 上觀看</a>
+      <button id="btn-skip-error" onclick="playNext()">⏭ 跳過，播放下一首</button>
+    </div>
+  </div>
+  <div id="controls">
+    <button id="btn-prev"    onclick="playPrev()">⏮ 上一首</button>
+    <button id="btn-order"   onclick="setMode('order')">▶ 順序播放</button>
+    <button id="btn-shuffle" onclick="setMode('shuffle')">🔀 隨機播放</button>
+    <button id="btn-next"    onclick="playNext()">⏭ 下一首</button>
+    <button id="btn-toggle-video" onclick="toggleVideo()">🎵 純音樂模式</button>
+    <span id="mode-label">順序播放</span>
+  </div>
+</div>
+<div id="song-list">
+  <h1>🎵 100首最熱廣東歌</h1>
+  <p class="subtitle">按播放量排序 · 點擊播放</p>
+
+  <div class="song-card" data-idx="0" data-vid="T4SimnaiktU" onclick="playSong(0)">
+    <span class="rank">1</span>
+    <img class="thumb" src="yt_covers/762543974174d47da2b07894497410c4.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">G.E.M.【光年之外 LIGHT YEARS AWAY 】MV (電影《太空潛航者 Passengers》中文主題曲) [HD] 鄧紫棋</div>
+      <div class="song-meta">GEMblog · 3.1亿 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="1" data-vid="8MG--WuNW1Y" onclick="playSong(1)">
+    <span class="rank">2</span>
+    <img class="thumb" src="yt_covers/4f980a8bb52960287c599477b1502d6f.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">韋禮安 WeiBird《如果可以 Red Scarf》MV - 電影「月老」主題曲導演親剪音樂視角版</div>
+      <div class="song-meta">韋禮安 WeiBird · 2.0亿 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="2" data-vid="qu_FSptjRic" onclick="playSong(2)">
+    <span class="rank">3</span>
+    <img class="thumb" src="yt_covers/6264d531bc59090c442237a98831832d.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">BEYOND【海闊天空】Music Video (粵) (HD)</div>
+      <div class="song-meta">滾石唱片 ROCK RECORDS · 1.8亿 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="3" data-vid="ma7r2HGqwXs" onclick="playSong(3)">
+    <span class="rank">4</span>
+    <img class="thumb" src="yt_covers/36feb654e035d5ca12cd1ce38b84e88e.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">G.E.M.【倒數 TIK TOK】Official MV [HD] 鄧紫棋</div>
+      <div class="song-meta">GEMblog · 1.5亿 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="4" data-vid="4OqXWzekVw4" onclick="playSong(4)">
+    <span class="rank">5</span>
+    <img class="thumb" src="yt_covers/ba8c7a9aa6380014a0404bcde664a5ef.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">G.E.M. 鄧紫棋 - 喜歡你 Official MV [HD]</div>
+      <div class="song-meta">GEMblog · 1.1亿 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="5" data-vid="Hlp8XD0R5qo" onclick="playSong(5)">
+    <span class="rank">6</span>
+    <img class="thumb" src="yt_covers/c8615ccf368d2453531cd0b36077c015.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">《孤勇者》（《英雄聯盟：雙城之戰》動畫劇集中文主題曲）陳奕迅 Eason Chan [Official MV]</div>
+      <div class="song-meta">Eason Chan · 8544万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="6" data-vid="EXaLvBGqQww" onclick="playSong(6)">
+    <span class="rank">7</span>
+    <img class="thumb" src="yt_covers/1ab299ba9f0a8abfbbbd082d83d07305.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">張雨生 Tom Chang - 大海 (official 官方完整版MV)</div>
+      <div class="song-meta">Timeless Music · 5513万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="7" data-vid="DDs5bXh4erM" onclick="playSong(7)">
+    <span class="rank">8</span>
+    <img class="thumb" src="yt_covers/904b7dd4017afc34cdc8db5561412ecb.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Mayday五月天【入陣曲】MV官方動畫版-中視[蘭陵王]片頭曲</div>
+      <div class="song-meta">相信音樂BinMusic · 5476万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="8" data-vid="TvSLCxXyrBA" onclick="playSong(8)">
+    <span class="rank">9</span>
+    <img class="thumb" src="yt_covers/e92c6f66408968407bdbbc9e89991557.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">街道辦、歐陽耀瑩 - 春嬌與志明【抖音裡的粵語RAP】【動態歌詞Lyrics】</div>
+      <div class="song-meta">EHPMusicChannel · 5379万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="9" data-vid="nku5zFMZAdU" onclick="playSong(9)">
+    <span class="rank">10</span>
+    <img class="thumb" src="yt_covers/6ecbd785f9181340d5b152290a800a8d.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">陳淑樺 Sarah Chen【夢醒時分 Dream to awakening】Official Music Video</div>
+      <div class="song-meta">滾石唱片 ROCK RECORDS · 5101万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="10" data-vid="W8x4m-qpmJ8" onclick="playSong(10)">
+    <span class="rank">11</span>
+    <img class="thumb" src="yt_covers/5b095967cbd3ac7c7641fa1b15d06117.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Yi Jian Mei (xue hua piao piao bei feng xiao xiao)</div>
+      <div class="song-meta">Fei Yu-ching - Topic · 4054万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="11" data-vid="JWcuUHVD4Ng" onclick="playSong(11)">
+    <span class="rank">12</span>
+    <img class="thumb" src="yt_covers/cbb46ea510b44a5e6c90084fd4cc4125.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">陳柏宇 Jason Chan - 你瞞我瞞 Lies Between Us | Official Music Video</div>
+      <div class="song-meta">jasonchanVEVO · 3993万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="12" data-vid="YZPFbnk_RS0" onclick="playSong(12)">
+    <span class="rank">13</span>
+    <img class="thumb" src="yt_covers/8b829cfb9a21fed821547c8ca304c937.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">MC 張天賦 - 記憶棉 Pillow Talk (Official Music Video)</div>
+      <div class="song-meta">MC 張天賦 · 3921万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="13" data-vid="dhjomo8W6Lc" onclick="playSong(13)">
+    <span class="rank">14</span>
+    <img class="thumb" src="yt_covers/aa60086e5d76a62c6a875ffe9167f6be.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">陳奕迅 Eason Chan 《我們》Us [Official MV]</div>
+      <div class="song-meta">Eason Chan · 3815万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="14" data-vid="fUiwiqs5JjM" onclick="playSong(14)">
+    <span class="rank">15</span>
+    <img class="thumb" src="yt_covers/94f4a79d0d64e868eb39ec50a20e77de.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">吳若希 Jinny - 越難越愛 (TVB劇集"使徒行者"片尾曲) (Official MV)</div>
+      <div class="song-meta">TVB Music Group · 3583万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="15" data-vid="UppBiK8xpeg" onclick="playSong(15)">
+    <span class="rank">16</span>
+    <img class="thumb" src="yt_covers/7305598509f0dbd9f9efdcc67149d822.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Dear Jane - 不許你注定一人 Never Be Alone (Official Music Video)</div>
+      <div class="song-meta">Dear Jane · 3497万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="16" data-vid="R2BUiErBRnY" onclick="playSong(16)">
+    <span class="rank">17</span>
+    <img class="thumb" src="yt_covers/a442a5edb61d8b964c3d7b47e0daed02.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">林奕匡 Phil - 高山低谷 (官方歌詞版MV)</div>
+      <div class="song-meta">Sony Music Entertainment Hong Kong · 3486万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="17" data-vid="MC9WIS_Spr4" onclick="playSong(17)">
+    <span class="rank">18</span>
+    <img class="thumb" src="yt_covers/f87b32ba16f5cf888d61bcce97a89dbb.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">经典老歌《西海情歌》刀郎独特嗓音，唱出了人间沧桑，每次都深深感动</div>
+      <div class="song-meta">小宝音悦丨Bao's Music Joy · 3451万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="18" data-vid="wPGCIqt_klw" onclick="playSong(18)">
+    <span class="rank">19</span>
+    <img class="thumb" src="yt_covers/23ee9cabe90a2a8f85c2c63efa019891.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Dear Jane - 哪裡只得我共你 You & Me (Official Music Video)</div>
+      <div class="song-meta">Dear Jane · 3429万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="19" data-vid="04cHqPMD4So" onclick="playSong(19)">
+    <span class="rank">20</span>
+    <img class="thumb" src="yt_covers/de3286fb8fdd67bd1da5dfffb7e45d7c.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">王菲 - 匆匆那年 Official MV (官方頻道)</div>
+      <div class="song-meta">Faye Wong Official Channel 王菲 官方頻道 · 3275万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="20" data-vid="u14rrcxENDw" onclick="playSong(20)">
+    <span class="rank">21</span>
+    <img class="thumb" src="yt_covers/a9cd0db8f76a3f3de976eb8720d8dee1.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">MC 張天賦 - 老派約會之必要 A Gentleman's Guide to Old-Fashioned Dating (Official Music Video)</div>
+      <div class="song-meta">MC 張天賦 · 3142万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="21" data-vid="L67zi-8wBXo" onclick="playSong(21)">
+    <span class="rank">22</span>
+    <img class="thumb" src="yt_covers/d37e23a77201a86e172ab5780509b40b.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">MC 張天賦 - 反對無效 Overruled (Official Music Video)</div>
+      <div class="song-meta">MC 張天賦 · 2994万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="22" data-vid="JDpRnPef5qQ" onclick="playSong(22)">
+    <span class="rank">23</span>
+    <img class="thumb" src="yt_covers/a1baf9afc36a5f6ecd074cb9c8f99890.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">《爱情转移》汪晨蕊华语粤语丝滑切换 这个版本的 #富士山下超有feel #陈奕迅  | 纯享 #music #live《中国新歌声》第9期 SING!CHINA EP.9 20160909</div>
+      <div class="song-meta">浙江卫视音乐频道 ZJSTV Music Channel - 欢迎订阅 - · 2966万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="23" data-vid="HcSE3cQH-Ic" onclick="playSong(23)">
+    <span class="rank">24</span>
+    <img class="thumb" src="yt_covers/dff639bf096a10312a205b96d7ab0a31.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">張國榮 Leslie Cheung【追 Chase】Official Music Video</div>
+      <div class="song-meta">滾石唱片 ROCK RECORDS · 2899万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="24" data-vid="7qeShSmmsNg" onclick="playSong(24)">
+    <span class="rank">25</span>
+    <img class="thumb" src="yt_covers/a8832811ecbfc68d1e9d68598c4fb543.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">富士山下</div>
+      <div class="song-meta">Eason Chan - Topic · 2807万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="25" data-vid="xLscpRjb8DI" onclick="playSong(25)">
+    <span class="rank">26</span>
+    <img class="thumb" src="yt_covers/d0931a529e1f0edc0704a80ccd18aa3a.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">莫文蔚 Karen Mok《這世界那麼多人 Empty World》Official MV - 電影「我要我們在一起」主題曲</div>
+      <div class="song-meta">莫文蔚 Karen Mok · 2790万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="26" data-vid="aAgywnuL7UQ" onclick="playSong(26)">
+    <span class="rank">27</span>
+    <img class="thumb" src="yt_covers/bfe9261a5a6cade4bb86fda165a6dd25.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">陳慧琳 - 《記事本》MV</div>
+      <div class="song-meta">KellyChenVEVO · 2740万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="27" data-vid="0GzLgn2fgcI" onclick="playSong(27)">
+    <span class="rank">28</span>
+    <img class="thumb" src="yt_covers/d6b0a610245a2e9ece3fc80a6906380f.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">黃氏兄弟【不專心】首張單曲MV ｜ Official Music Video</div>
+      <div class="song-meta">黃氏兄弟 · 2739万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="28" data-vid="XnNIPXT9YvE" onclick="playSong(28)">
+    <span class="rank">29</span>
+    <img class="thumb" src="yt_covers/5aac93da296c306aeec49fcf78335c5c.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">夕陽之歌 (Official Music Video) - 梅艷芳 Anita Mui</div>
+      <div class="song-meta">華星唱片 Capital Artists Official Channel · 2709万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="29" data-vid="-gkwJEkS4_M" onclick="playSong(29)">
+    <span class="rank">30</span>
+    <img class="thumb" src="yt_covers/3fb86c892a29fc3128ccd7a531c83ac0.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">HANA菊梓喬 - 忘記我自己 (劇集 "使徒行者2" 片尾曲) Official MV</div>
+      <div class="song-meta">TVB Music Group · 2705万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="30" data-vid="enkDpwX9Ryc" onclick="playSong(30)">
+    <span class="rank">31</span>
+    <img class="thumb" src="yt_covers/be03783eb04a84fbea41875fc211cdb8.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">廣東雨神 - 廣東愛情故事 「人在廣東已經漂泊十年，有時也懷念當初一起 經已改變。」♪ Karendaidai ♪</div>
+      <div class="song-meta">KarenDaidai Music Channel · 2697万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="31" data-vid="f5NzXpC8tdU" onclick="playSong(31)">
+    <span class="rank">32</span>
+    <img class="thumb" src="yt_covers/c47deb6180bceb02eee82258f6360a80.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">姜濤 Keung To 《蒙著嘴說愛你》MV</div>
+      <div class="song-meta">MIRROR · 2582万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="32" data-vid="3euRDKzPS4M" onclick="playSong(32)">
+    <span class="rank">33</span>
+    <img class="thumb" src="yt_covers/6b477a9b6fdf39dcb402777f69d695b0.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Dear Jane - 到底發生過什麼事 What Happened (Official Music Video)</div>
+      <div class="song-meta">Dear Jane · 2549万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="33" data-vid="URUIcYDq3_I" onclick="playSong(33)">
+    <span class="rank">34</span>
+    <img class="thumb" src="yt_covers/c8d0841ae3f362e63452b8cbbe26a357.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">陳奕迅 Eason Chan - 陀飛輪 (Official Music Video)</div>
+      <div class="song-meta">universalmusichk · 2483万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="34" data-vid="v04DzjzSb5w" onclick="playSong(34)">
+    <span class="rank">35</span>
+    <img class="thumb" src="yt_covers/b463bcf7399f0187a354b68969d299ba.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">盧巧音 Candy Lo feat. 王力宏 Leehom Wang - 好心分手</div>
+      <div class="song-meta">CandyLoVEVO · 2455万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="35" data-vid="eohv9VjMfGw" onclick="playSong(35)">
+    <span class="rank">36</span>
+    <img class="thumb" src="yt_covers/8f433640d9075bb7d0b56c13dead305a.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Simyee陳芯怡 - 青花瓷 (粤语版)「 回头望世间散尽一丝的枯灯，余生等一吻。」</div>
+      <div class="song-meta">KarenDaidai Music Channel · 2421万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="36" data-vid="lyH0QIwbN_4" onclick="playSong(36)">
+    <span class="rank">37</span>
+    <img class="thumb" src="yt_covers/158c6e9fd60fd34deeddd0e6df2157e0.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">連詩雅 Shiga Lin - 到此為止 The End (Official Music Video)</div>
+      <div class="song-meta">warnermusichk · 2331万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="37" data-vid="4PACFmxlHm8" onclick="playSong(37)">
+    <span class="rank">38</span>
+    <img class="thumb" src="yt_covers/fc1109047c468aba8844ebf951b5eac3.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Supper Moment - 無盡 MV</div>
+      <div class="song-meta">Redline Music · 2298万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="38" data-vid="z9zMcvn_xkI" onclick="playSong(38)">
+    <span class="rank">39</span>
+    <img class="thumb" src="yt_covers/fe002cad05ec18082682e8236aafe9ff.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">周柏豪 Pakho Chau - 我的宣言 My Vow (Official Music Video)</div>
+      <div class="song-meta">warnermusichk · 2268万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="39" data-vid="tSHVPxO2tbo" onclick="playSong(39)">
+    <span class="rank">40</span>
+    <img class="thumb" src="yt_covers/8431ea10b14d434eff263fe024892b63.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">胡鴻鈞 Hubert Wu - 到此一遊 (劇集 "降魔的" 主題曲) Official MV</div>
+      <div class="song-meta">TVB Music Group · 2254万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="40" data-vid="y0djx2cpjto" onclick="playSong(40)">
+    <span class="rank">41</span>
+    <img class="thumb" src="yt_covers/fa47a8201f0b47510473eff9191d02e6.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Beyond - 情人 （粤）</div>
+      <div class="song-meta">音乐收藏 · 2135万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="41" data-vid="P1JUS4emI2s" onclick="playSong(41)">
+    <span class="rank">42</span>
+    <img class="thumb" src="yt_covers/cc28c9315164197a40c5d5eb3ab83b58.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">鄭智化 Zheng Zhi-Hua - 水手 Sailor (official官方完整版MV)</div>
+      <div class="song-meta">Timeless Music · 2129万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="42" data-vid="pSqIJFr11xk" onclick="playSong(42)">
+    <span class="rank">43</span>
+    <img class="thumb" src="yt_covers/a56d3f63119b1d7d2279c776f56572d6.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">彭羚 Cass Phang -  囚鳥  (官方完整版MV)</div>
+      <div class="song-meta">Timeless Music · 2105万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="43" data-vid="mt56HEafeWU" onclick="playSong(43)">
+    <span class="rank">44</span>
+    <img class="thumb" src="yt_covers/26d57458f0d67c4394b3435688d7c00a.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">gareth.t -  緊急聯絡人 (official video)</div>
+      <div class="song-meta">Gareth.T · 2082万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="44" data-vid="PpVNdL9Wz_M" onclick="playSong(44)">
+    <span class="rank">45</span>
+    <img class="thumb" src="yt_covers/3e1c2f2e0500a93524b082b31ae5b5b6.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">葉麗儀丨上海灘丨HKPO & Frances Yip 港樂葉麗儀 DIVA</div>
+      <div class="song-meta">環星音樂 / 環星娛樂 WSM Music HK · 2054万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="45" data-vid="I3NFPlSmNu8" onclick="playSong(45)">
+    <span class="rank">46</span>
+    <img class="thumb" src="yt_covers/05d5a45241bd1aeb9e7bb5c2fc51cc40.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">周柏豪 Pakho - 讓愛高飛 (劇集 "多功能老婆" 片尾曲) Official MV</div>
+      <div class="song-meta">TVB Music Group · 1982万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="46" data-vid="bv_cEeDlop0" onclick="playSong(46)">
+    <span class="rank">47</span>
+    <img class="thumb" src="yt_covers/75375f801f13570af620d36d33e1a3c4.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">The Moon Represents My Heart - Teresa Teng</div>
+      <div class="song-meta">BlueNxT · 1964万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="47" data-vid="fTu70rvAupM" onclick="playSong(47)">
+    <span class="rank">48</span>
+    <img class="thumb" src="yt_covers/410300b359d713ae12161304cf143694.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">歲月如歌</div>
+      <div class="song-meta">Eason Chan - Topic · 1896万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="48" data-vid="UJb_XsrJ3-A" onclick="playSong(48)">
+    <span class="rank">49</span>
+    <img class="thumb" src="yt_covers/a64742b65240940df8c9be64034b9b91.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Endless Love Jackie Chan & Kim Hee Seon with lyrics</div>
+      <div class="song-meta">Kwento ni LiS · 1890万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="49" data-vid="OfIFA-V6Zec" onclick="playSong(49)">
+    <span class="rank">50</span>
+    <img class="thumb" src="yt_covers/02575ab54b19970acaafe5396396116e.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">G.E.M.鄧紫棋【海闊天空 Infinite】LIVE現場版 (時光音樂會 · 老友記 EP.12)</div>
+      <div class="song-meta">GEM鄧紫棋 · 1862万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="50" data-vid="kTzUwhPuIwg" onclick="playSong(50)">
+    <span class="rank">51</span>
+    <img class="thumb" src="yt_covers/101ef957b9f0670ec3f7dd8d7556d172.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">鄭秀文 Sammi Cheng - 我們都是這樣長大的 We Grew This Way (Official Music Video)</div>
+      <div class="song-meta">寰亞音樂 Media Asia Music Official Channel · 1823万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="51" data-vid="CJ4fKSmOf3U" onclick="playSong(51)">
+    <span class="rank">52</span>
+    <img class="thumb" src="yt_covers/f3c2f76b700e89510d686db051803b0f.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">蘇永康 William So 《那誰》官方 MV</div>
+      <div class="song-meta">東亞唱片 East Asia Music Official Channel · 1806万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="52" data-vid="hm0xK0dp134" onclick="playSong(52)">
+    <span class="rank">53</span>
+    <img class="thumb" src="yt_covers/5df86ae17010dc11704e6e557f11deca.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">特別的愛給特別的你</div>
+      <div class="song-meta">Sky Wu - Topic · 1783万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="53" data-vid="Rp4iHpTvBY8" onclick="playSong(53)">
+    <span class="rank">54</span>
+    <img class="thumb" src="yt_covers/49d8243c2bb4a4ae387b639037a4b14c.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">洪嘉豪 Hung Kaho - 黑玻璃 Tinted Windows (Official Music Video)</div>
+      <div class="song-meta">洪嘉豪 Hung Kaho · 1774万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="54" data-vid="falq0Gr3rc0" onclick="playSong(54)">
+    <span class="rank">55</span>
+    <img class="thumb" src="yt_covers/c95b1a9d08c051cfa8a25c33cf761ae1.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">gareth.t - 用背脊唱情歌 (official video)</div>
+      <div class="song-meta">Gareth.T · 1698万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="55" data-vid="migZH5LJ-D0" onclick="playSong(55)">
+    <span class="rank">56</span>
+    <img class="thumb" src="yt_covers/4fbc2343df7448b0525d3b4a8fbe9268.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">[鄭中基 - 無賴] 歌词 Lyrics</div>
+      <div class="song-meta">Day_13y_Day · 1697万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="56" data-vid="qWhavDVsMRc" onclick="playSong(56)">
+    <span class="rank">57</span>
+    <img class="thumb" src="yt_covers/ef4d79184859b92e94ac60b2f66e4c3b.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">林家謙 Terence Lam 《一人之境》 Solitude (Official MV)</div>
+      <div class="song-meta">林家謙 Terence Lam · 1660万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="57" data-vid="BKld0fxCu9k" onclick="playSong(57)">
+    <span class="rank">58</span>
+    <img class="thumb" src="yt_covers/a12922fe7db23d41cbdaed37bfd15645.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">泳兒 海鳴威《我的回憶不是我的》[Official MV]</div>
+      <div class="song-meta">英皇娛樂 eeg music · 1627万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="58" data-vid="d44u2W-votY" onclick="playSong(58)">
+    <span class="rank">59</span>
+    <img class="thumb" src="yt_covers/611426b243f5c74576ef116844e82682.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">千千闋歌</div>
+      <div class="song-meta">Priscilla Chan - Topic · 1598万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="59" data-vid="M-qe0q1EOZk" onclick="playSong(59)">
+    <span class="rank">60</span>
+    <img class="thumb" src="yt_covers/fd6e059f3b1278e7faa84360b3f33209.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Lies Between Us</div>
+      <div class="song-meta">Jason Chan - Topic · 1578万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="60" data-vid="5jD2VYQD5A8" onclick="playSong(60)">
+    <span class="rank">61</span>
+    <img class="thumb" src="yt_covers/0e34a4a152024d5299a2c27ee6a0f220.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">TWINS BOY'Z《死性不改》[Official MV]</div>
+      <div class="song-meta">英皇娛樂 eeg music · 1525万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="61" data-vid="EbJhct_HTu8" onclick="playSong(61)">
+    <span class="rank">62</span>
+    <img class="thumb" src="yt_covers/8eb4ce3f7e58de4c8352a98efbb93fab.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">鄭欣宜 Joyce Cheng -《女神》 [官方完整版 OFFICIAL MV]</div>
+      <div class="song-meta">Neway Star Official Channel · 1517万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="62" data-vid="ZRMMl3590Oc" onclick="playSong(62)">
+    <span class="rank">63</span>
+    <img class="thumb" src="yt_covers/ef6a9c14d890fe5ad260f14b4443052f.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">春娇与志明</div>
+      <div class="song-meta">街道办GDC - Topic · 1509万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="63" data-vid="07rwyBuh2Mg" onclick="playSong(63)">
+    <span class="rank">64</span>
+    <img class="thumb" src="yt_covers/5ba51fdd5b67954bd0dfb2505d5989a3.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">MC 張天賦 - 說謊者 Liar (Official Music Video)</div>
+      <div class="song-meta">MC 張天賦 · 1420万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="64" data-vid="EvW1WO3gHrg" onclick="playSong(64)">
+    <span class="rank">65</span>
+    <img class="thumb" src="yt_covers/749c3c2f914ae5e58d1ac97286e72bf6.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Supper Moment 風箏 MV</div>
+      <div class="song-meta">Redline Music · 1419万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="65" data-vid="Iw3WgP8A18I" onclick="playSong(65)">
+    <span class="rank">66</span>
+    <img class="thumb" src="yt_covers/53df116f4867f90637b6dadfc3f89b6b.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">陳奕迅 Eason Chan《K歌之王(國)》[Official MV]</div>
+      <div class="song-meta">英皇娛樂 eeg music · 1389万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="66" data-vid="h7A-VpGYVlU" onclick="playSong(66)">
+    <span class="rank">67</span>
+    <img class="thumb" src="yt_covers/1b45e612740319e766f36af983277f1d.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Simyee陳芯怡 - 青花瓷（粵語版）『天青色配煙雲 隨月海上行，燈火中照伊人 原是你獨行，回頭望世間散盡一絲的枯燈，餘生等一吻。』【動態歌詞MV】</div>
+      <div class="song-meta">EHP MUSIC · 1360万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="67" data-vid="7TefwmjpAqo" onclick="playSong(67)">
+    <span class="rank">68</span>
+    <img class="thumb" src="yt_covers/bf3b8acc39ac377c8d8f29f00aa80796.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Supper Moment - 幸福之歌 Official MV</div>
+      <div class="song-meta">Redline Music · 1359万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="68" data-vid="fdxXHgIe2ho" onclick="playSong(68)">
+    <span class="rank">69</span>
+    <img class="thumb" src="yt_covers/f32314803362ba86480a5339a19c2325.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">譚嘉儀 Kayee - Can You Hear (劇集 "白色強人" 插曲) Official MV</div>
+      <div class="song-meta">TVB Music Group · 1356万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="69" data-vid="I0kgjKFF-YU" onclick="playSong(69)">
+    <span class="rank">70</span>
+    <img class="thumb" src="yt_covers/8aca18e7fd9ab1ad59306eb2f1866e3b.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">王浩信/HANA菊梓喬 -  欲言又止 (劇集 "溏心風暴3" 片尾曲) Official MV</div>
+      <div class="song-meta">TVB Music Group · 1340万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="70" data-vid="h-mtWt0WCFU" onclick="playSong(70)">
+    <span class="rank">71</span>
+    <img class="thumb" src="yt_covers/a182398959057d01fb1db088c4980b6d.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Heyo - 《盛夏的舞》Feat. 衛詩 aka Jill Vidal MV</div>
+      <div class="song-meta">heyoliztic · 1323万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="71" data-vid="jxA4xQbDcyE" onclick="playSong(71)">
+    <span class="rank">72</span>
+    <img class="thumb" src="yt_covers/a05de269898e63f8e77b8215351a68a5.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">黃明志【學廣東話】Vienna Lin 連綺嵐特別演出 (Official Music Video)</div>
+      <div class="song-meta">Namewee · 1307万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="72" data-vid="BxsW2sBw3pM" onclick="playSong(72)">
+    <span class="rank">73</span>
+    <img class="thumb" src="yt_covers/a139525b58ace6c3e3b87d267c55614c.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Supper Moment - 小伙子 Official MV</div>
+      <div class="song-meta">Redline Music · 1301万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="73" data-vid="FTA_tCy6tS8" onclick="playSong(73)">
+    <span class="rank">74</span>
+    <img class="thumb" src="yt_covers/fecc6ac131d16cf55cdec4406a832ed5.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Eason 陳奕迅 於心有愧 MV</div>
+      <div class="song-meta">universalmusichk · 1287万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="74" data-vid="RPoNXvSFHE4" onclick="playSong(74)">
+    <span class="rank">75</span>
+    <img class="thumb" src="yt_covers/70e018976bed1836cd5336ebe12214d1.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Kiri T - 至少做一件離譜的事 You Gotta Screw Up At Least Once [Official Music Video]</div>
+      <div class="song-meta">Kiri T · 1284万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="75" data-vid="_M_q-QBsKe8" onclick="playSong(75)">
+    <span class="rank">76</span>
+    <img class="thumb" src="yt_covers/a9818e42f05abd49771a350a24a1495c.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">鄭俊弘 Fred Cheng - 投降吧 Surrender (Official MV)</div>
+      <div class="song-meta">TVB Music Group · 1279万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="76" data-vid="8NJVNkzhJM4" onclick="playSong(76)">
+    <span class="rank">77</span>
+    <img class="thumb" src="yt_covers/fc432024ae205490795706f6ff9c8a7f.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">陳奕迅 Eason Chan《明年今日》[Official MV]</div>
+      <div class="song-meta">英皇娛樂 eeg music · 1261万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="77" data-vid="EAvYkb9NAP4" onclick="playSong(77)">
+    <span class="rank">78</span>
+    <img class="thumb" src="yt_covers/5ae995541e14028c53d229c261b05970.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">[獨家首播] 吳業坤 Kwan Gor - 陽光點的歌 Official MV - 官方完整版</div>
+      <div class="song-meta">Kwan Gor · 1249万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="78" data-vid="y9ntnHvD4tQ" onclick="playSong(78)">
+    <span class="rank">79</span>
+    <img class="thumb" src="yt_covers/4e93956e28a9e8fda27c2aa21ec4e52a.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">張敬軒 Hins Cheung《隱形遊樂場》(Imaginary fairground) [Official MV]</div>
+      <div class="song-meta">張敬軒 Hins Cheung · 1239万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="79" data-vid="FvlJyzAYQrk" onclick="playSong(79)">
+    <span class="rank">80</span>
+    <img class="thumb" src="yt_covers/4f99322dbdffbf61918d95387bdcde8d.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">囍帖街</div>
+      <div class="song-meta">Kay Tse - Topic · 1223万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="80" data-vid="_SODktUwNYo" onclick="playSong(80)">
+    <span class="rank">81</span>
+    <img class="thumb" src="yt_covers/04addc14f0201e517fddbb2de360ef08.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">張學友, 高慧君 - 你最珍貴 (Official Video)</div>
+      <div class="song-meta">JackyCheungVEVO · 1168万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="81" data-vid="-1Tgevxdouk" onclick="playSong(81)">
+    <span class="rank">82</span>
+    <img class="thumb" src="yt_covers/e716287a384e25fc1ad27aa287477068.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">抖音熱門經典音樂歌曲排行榜《我只在乎你》所以我求求你，別讓我離開你</div>
+      <div class="song-meta">晚间音乐（中国） · 1162万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="82" data-vid="1WLFhjQ0cDc" onclick="playSong(82)">
+    <span class="rank">83</span>
+    <img class="thumb" src="yt_covers/72a0fe5b3239e5b77aa22840cdca1038.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">王傑 Dave Wong《不浪漫罪名》[Official MV]</div>
+      <div class="song-meta">英皇娛樂 eeg music · 1146万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="83" data-vid="rWNgAbfpWYs" onclick="playSong(83)">
+    <span class="rank">84</span>
+    <img class="thumb" src="yt_covers/c95ad9bd73a71c37097d40f70946eaf6.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">莫文蔚 Karen Mok《呼吸有害 Breathing Is Hazardous》Official Music Video</div>
+      <div class="song-meta">莫文蔚 Karen Mok · 1131万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="84" data-vid="7PWU70mE5uQ" onclick="playSong(84)">
+    <span class="rank">85</span>
+    <img class="thumb" src="yt_covers/5ed6d9ae6da60189d2a513896d24ae52.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">【纯享版】粤语歌是容祖儿的"必杀技"！搭档周柏豪一曲经典《必杀技》梦回港乐黄金年代！ #天赐的声音5 EP5 20240524</div>
+      <div class="song-meta">浙江卫视音乐频道 ZJSTV Music Channel - 欢迎订阅 - · 1107万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="85" data-vid="yK9VEXKlWwE" onclick="playSong(85)">
+    <span class="rank">86</span>
+    <img class="thumb" src="yt_covers/d64b1bc2ef2274145e7db3808c3f8d9f.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">【黑胶纯享】林晓峰＆刘惜君舞台观赏性太绝了！男女对唱《现代爱情故事》经典再现 《声生不息》 Infinity and Beyond EP6丨MangoTV</div>
+      <div class="song-meta">芒果TV音乐 MangoTV Music · 1064万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="86" data-vid="nmUlVd9Q_Ok" onclick="playSong(86)">
+    <span class="rank">87</span>
+    <img class="thumb" src="yt_covers/017e54ef9f6c346f9ea9e52ef3c5424c.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">一生中最爱 谭咏麟 (歌词版)</div>
+      <div class="song-meta">GM Lyric · 1012万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="87" data-vid="HZf26r_DplA" onclick="playSong(87)">
+    <span class="rank">88</span>
+    <img class="thumb" src="yt_covers/7f5fececf75a88e16854aec6fbca2ca9.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">经典老歌，梅艳芳《女人花》催人泪下，唱哭多少重情重义的痴心人，太好听了！</div>
+      <div class="song-meta">小宝音悦丨Bao's Music Joy · 1007万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="88" data-vid="FE9PszSPfKo" onclick="playSong(88)">
+    <span class="rank">89</span>
+    <img class="thumb" src="yt_covers/7e1bb12d85207e54842a0e396dc29809.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">黃明志 Ft. 盧巧音【唱廣東歌】(Official Music Video)</div>
+      <div class="song-meta">Namewee · 976万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="89" data-vid="iw1T-Q96fvs" onclick="playSong(89)">
+    <span class="rank">90</span>
+    <img class="thumb" src="yt_covers/6e28cea6dc33abf7d8deacff89d5bb3d.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">G.E.M.鄧紫棋【情人 Valentine】LIVE現場版 (時光音樂會 · 老友記 EP.2)</div>
+      <div class="song-meta">GEM鄧紫棋 · 958万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="90" data-vid="GUCoNfRmchM" onclick="playSong(90)">
+    <span class="rank">91</span>
+    <img class="thumb" src="yt_covers/ca60cc3e156f0275d77dae9903814d07.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">林家謙 Terence Lam 《普渡眾生》電影《破．地獄》主題曲 MV</div>
+      <div class="song-meta">林家謙 Terence Lam · 927万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="91" data-vid="EqrZAt_P-tM" onclick="playSong(91)">
+    <span class="rank">92</span>
+    <img class="thumb" src="yt_covers/08307651b3d173738bef33c8a9b6efb1.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">富士山下 陈奕迅 (歌词版)</div>
+      <div class="song-meta">GM Lyric · 880万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="92" data-vid="cXhMmKFpFeQ" onclick="playSong(92)">
+    <span class="rank">93</span>
+    <img class="thumb" src="yt_covers/701fb6825dc965cfb9631d0430f78ad4.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Mr. 【森林】MV</div>
+      <div class="song-meta">universalmusichk · 845万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="93" data-vid="17r5yGsOkj4" onclick="playSong(93)">
+    <span class="rank">94</span>
+    <img class="thumb" src="yt_covers/b41ba2b5668dcb0276ba0fa4c63af406.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">讓一切隨風</div>
+      <div class="song-meta">Kenny Bee - Topic · 812万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="94" data-vid="lYfOfa_5CMQ" onclick="playSong(94)">
+    <span class="rank">95</span>
+    <img class="thumb" src="yt_covers/7e9848f2f900e74c9905cf715cf1de64.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">Beyond 經典（内附歌詞）01 海闊天空   02 真的愛你  03 光輝歲月   04 喜歡你</div>
+      <div class="song-meta">真愛音樂Music-Love-Peace-Joy · 808万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="95" data-vid="c-2UG5q9qGA" onclick="playSong(95)">
+    <span class="rank">96</span>
+    <img class="thumb" src="yt_covers/7317ddd37dcaa1752958aebf5bec63e3.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">月半小夜曲 李克勤 (歌词版)</div>
+      <div class="song-meta">GM Lyric · 801万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="96" data-vid="TU0kfauKL98" onclick="playSong(96)">
+    <span class="rank">97</span>
+    <img class="thumb" src="yt_covers/de64c463beac71874aa4b99b1bf7ae24.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">鄧岳章 - 情意結（原唱：陳慧嫻）『你把玻璃放低請給我跪，願這便和你有新話題。』【動態歌詞/Vietsub Lyrics】【粵語歌】</div>
+      <div class="song-meta">EHPMusicChannel · 759万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="97" data-vid="aKIWOy8rOnk" onclick="playSong(97)">
+    <span class="rank">98</span>
+    <img class="thumb" src="yt_covers/abd513387da2a254065058d6c97c6c6a.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">经典老歌，华仔一曲《暗里着迷》粤语歌曲，一开口便是满满的回忆</div>
+      <div class="song-meta">小宝音悦丨Bao's Music Joy · 745万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="98" data-vid="jgljLuTwjno" onclick="playSong(98)">
+    <span class="rank">99</span>
+    <img class="thumb" src="yt_covers/bfb5153f60ed3897c4c4aa84abd6be3d.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">【ROCK Classical】一人一首成名曲</div>
+      <div class="song-meta">滾石唱片 ROCK RECORDS · 718万 次播放</div>
+    </div>
+  </div>
+  <div class="song-card" data-idx="99" data-vid="3y05wsJMndc" onclick="playSong(99)">
+    <span class="rank">100</span>
+    <img class="thumb" src="yt_covers/21556c175d591bfcafa142514b858a84.jpg" alt="封面">
+    <div class="song-info">
+      <div class="song-title">【纯享版】粤语歌是容祖儿的统治区！惊喜搭档老友王祖蓝 细腻歌声带领听众走进一只《孤雏》的内心世界！ #天赐的声音5 EP11 20240705</div>
+      <div class="song-meta">浙江卫视音乐频道 ZJSTV Music Channel - 欢迎订阅 - · 687万 次播放</div>
+    </div>
+  </div>
+</div>
+
+<!-- YouTube IFrame Player API -->
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+const VIDEO_IDS = ["T4SimnaiktU","8MG--WuNW1Y","qu_FSptjRic","ma7r2HGqwXs","4OqXWzekVw4","Hlp8XD0R5qo","EXaLvBGqQww","DDs5bXh4erM","TvSLCxXyrBA","nku5zFMZAdU","W8x4m-qpmJ8","JWcuUHVD4Ng","YZPFbnk_RS0","dhjomo8W6Lc","fUiwiqs5JjM","UppBiK8xpeg","R2BUiErBRnY","MC9WIS_Spr4","wPGCIqt_klw","04cHqPMD4So","u14rrcxENDw","L67zi-8wBXo","JDpRnPef5qQ","HcSE3cQH-Ic","7qeShSmmsNg","xLscpRjb8DI","aAgywnuL7UQ","0GzLgn2fgcI","XnNIPXT9YvE","-gkwJEkS4_M","enkDpwX9Ryc","f5NzXpC8tdU","3euRDKzPS4M","URUIcYDq3_I","v04DzjzSb5w","eohv9VjMfGw","lyH0QIwbN_4","4PACFmxlHm8","z9zMcvn_xkI","tSHVPxO2tbo","y0djx2cpjto","P1JUS4emI2s","pSqIJFr11xk","mt56HEafeWU","PpVNdL9Wz_M","I3NFPlSmNu8","bv_cEeDlop0","fTu70rvAupM","UJb_XsrJ3-A","OfIFA-V6Zec","kTzUwhPuIwg","CJ4fKSmOf3U","hm0xK0dp134","Rp4iHpTvBY8","falq0Gr3rc0","migZH5LJ-D0","qWhavDVsMRc","BKld0fxCu9k","d44u2W-votY","M-qe0q1EOZk","5jD2VYQD5A8","EbJhct_HTu8","ZRMMl3590Oc","07rwyBuh2Mg","EvW1WO3gHrg","Iw3WgP8A18I","h7A-VpGYVlU","7TefwmjpAqo","fdxXHgIe2ho","I0kgjKFF-YU","h-mtWt0WCFU","jxA4xQbDcyE","BxsW2sBw3pM","FTA_tCy6tS8","RPoNXvSFHE4","_M_q-QBsKe8","8NJVNkzhJM4","EAvYkb9NAP4","y9ntnHvD4tQ","FvlJyzAYQrk","_SODktUwNYo","-1Tgevxdouk","1WLFhjQ0cDc","rWNgAbfpWYs","7PWU70mE5uQ","yK9VEXKlWwE","nmUlVd9Q_Ok","HZf26r_DplA","FE9PszSPfKo","iw1T-Q96fvs","GUCoNfRmchM","EqrZAt_P-tM","cXhMmKFpFeQ","17r5yGsOkj4","lYfOfa_5CMQ","c-2UG5q9qGA","TU0kfauKL98","aKIWOy8rOnk","jgljLuTwjno","3y05wsJMndc"];
+
+let playlist   = [...Array(VIDEO_IDS.length).keys()];
+let currentPos = -1;
+let mode       = 'order';
+let player     = null;
+let apiReady   = false;
+let pendingSongIdx = 0;  // play first song once API is ready
+
+// ── YouTube IFrame API callback ──────────────────────────────
+function onYouTubeIframeAPIReady() {
+  apiReady = true;
+  player = new YT.Player('ytplayer', {
+    width: '100%',
+    height: '100%',
+    playerVars: { autoplay: 1, rel: 0 },
+    events: {
+      onReady:       onPlayerReady,
+      onStateChange: onPlayerStateChange,
+      onError:       onPlayerError
+    }
+  });
+}
+
+function onPlayerReady() {
+  playSong(pendingSongIdx);
+}
+
+function onPlayerStateChange(event) {
+  // State 0 = ended → auto-play next
+  if (event.data === YT.PlayerState.ENDED) {
+    setTimeout(playNext, 1000);
+  }
+}
+
+function onPlayerError(event) {
+  // Error 153 (and 150) = embedding disabled by owner
+  if (event.data === 153 || event.data === 150) {
+    const vid = VIDEO_IDS[playlist[currentPos]];
+    const overlay = document.getElementById('error-overlay');
+    document.getElementById('btn-watch-yt').href =
+      'https://www.youtube.com/watch?v=' + vid;
+    overlay.classList.add('visible');
+  }
+}
+
+function toggleVideo() {
+  const wrapper = document.getElementById('player-wrapper');
+  const btn = document.getElementById('btn-toggle-video');
+  const isHidden = wrapper.classList.toggle('hidden-video');
+  btn.textContent = isHidden ? '📺 顯示影片' : '🎵 純音樂模式';
+  btn.classList.toggle('active', isHidden);
+}
+
+function hideOverlay() {
+  document.getElementById('error-overlay').classList.remove('visible');
+}
+
+// ── Playlist logic ───────────────────────────────────────────
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('mode-label').textContent =
+    m === 'shuffle' ? '🔀 隨機播放中' : '▶ 順序播放中';
+  document.getElementById('btn-order').style.background   = m === 'order'   ? '#c00' : '#333';
+  document.getElementById('btn-shuffle').style.background = m === 'shuffle' ? '#c00' : '#333';
+  if (m === 'shuffle') {
+    shuffle(playlist);
+    if (currentPos >= 0) {
+      const cur = playlist[currentPos];
+      const pos = playlist.indexOf(cur);
+      playlist.splice(pos, 1);
+      playlist.unshift(cur);
+      currentPos = 0;
+    }
+  } else {
+    const curIdx = currentPos >= 0 ? playlist[currentPos] : -1;
+    playlist = [...Array(VIDEO_IDS.length).keys()];
+    currentPos = curIdx >= 0 ? playlist.indexOf(curIdx) : -1;
+  }
+}
+
+function playSong(songIdx) {
+  hideOverlay();
+  currentPos = playlist.indexOf(songIdx);
+  if (currentPos === -1) {
+    playlist = [...Array(VIDEO_IDS.length).keys()];
+    if (mode === 'shuffle') shuffle(playlist);
+    currentPos = playlist.indexOf(songIdx);
+  }
+  loadVideo(songIdx);
+}
+
+function playNext() {
+  hideOverlay();
+  if (currentPos === -1) { playSong(0); return; }
+  currentPos = (currentPos + 1) % playlist.length;
+  loadVideo(playlist[currentPos]);
+}
+
+function playPrev() {
+  hideOverlay();
+  if (currentPos === -1) { playSong(0); return; }
+  currentPos = (currentPos - 1 + playlist.length) % playlist.length;
+  loadVideo(playlist[currentPos]);
+}
+
+function loadVideo(songIdx) {
+  const vid = VIDEO_IDS[songIdx];
+  if (player && player.loadVideoById) {
+    player.loadVideoById(vid);
+  }
+  // Update title
+  const card = document.querySelector(`.song-card[data-idx="${songIdx}"]`);
+  const title = card ? card.querySelector('.song-title').textContent : '';
+  document.getElementById('player-title').textContent = title;
+  // Highlight active card
+  document.querySelectorAll('.song-card').forEach(c => c.classList.remove('active'));
+  if (card) {
+    card.classList.add('active');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+</script>
+</body>
+</html>
