@@ -8,17 +8,17 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-    background: #111; color: #eee;
+    background: #f0f7ee; color: #222;
   }
   #player-section {
-    background: #000;
+    background: #111;
     display: flex; flex-direction: column; align-items: center;
     padding: 20px 16px 12px;
     position: sticky; top: 0; z-index: 10;
-    box-shadow: 0 4px 20px rgba(0,0,0,.8);
+    box-shadow: 0 4px 20px rgba(0,0,0,.6);
   }
   #player-title {
-    font-size: 1rem; color: #fff; margin-bottom: 10px;
+    font-size: 1rem; color: #ddd; margin-bottom: 10px;
     text-align: center; max-width: 640px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
@@ -34,12 +34,12 @@
   /* Error overlay */
   #error-overlay {
     display: none; position: absolute; inset: 0;
-    background: #1a1a1a; flex-direction: column;
+    background: #d8edd8; flex-direction: column;
     align-items: center; justify-content: center;
     gap: 16px; text-align: center; padding: 20px;
   }
   #error-overlay.visible { display: flex; }
-  #error-overlay p { color: #aaa; font-size: .95rem; }
+  #error-overlay p { color: #555; font-size: .95rem; }
   #btn-watch-yt {
     padding: 10px 24px; border: none; border-radius: 20px;
     background: #f00; color: #fff; font-size: 1rem;
@@ -70,53 +70,52 @@
   #ad-status   { font-size: .75rem; color: #fa0; align-self: center; display: none; }
   /* Song list */
   #song-list { max-width: 760px; margin: 24px auto; padding: 0 12px 40px; }
-  h1 { text-align: center; font-size: 1.6rem; color: #f44; margin-bottom: 6px; }
+  h1 { text-align: center; font-size: 1.6rem; color: #48f; margin-bottom: 6px; }
   .subtitle { text-align: center; color: #888; font-size: .85rem; margin-bottom: 20px; }
   .song-card {
     display: flex; align-items: center; gap: 12px;
     padding: 10px 12px; border-radius: 8px;
     cursor: pointer; transition: background .15s;
-    border-bottom: 1px solid #222;
+    border-bottom: 1px solid #ddd;
   }
-  .song-card:hover  { background: #1e1e1e; }
-  .song-card.active { background: #1a0000; border-left: 3px solid #f44; }
-  .rank { width: 32px; text-align: right; font-size: .85rem; color: #666; flex-shrink: 0; }
+  .song-card:hover  { background: #ddeedd; }
+  .song-card.active { background: #c8ecd0; border-left: 3px solid #f44; }
+  .rank { width: 32px; text-align: right; font-size: .85rem; color: #999; flex-shrink: 0; }
   .song-card.active .rank { color: #f44; font-weight: bold; }
   .thumb {
     width: 72px; height: 54px; object-fit: cover;
-    border-radius: 4px; flex-shrink: 0; background: #333;
+    border-radius: 4px; flex-shrink: 0; background: #ccc;
   }
   .song-info { flex: 1; min-width: 0; }
   .song-title {
-    font-size: .95rem; color: #eee;
+    font-size: .95rem; color: #222;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .song-card.active .song-title { color: #f77; }
-  .song-meta { font-size: .75rem; color: #777; margin-top: 3px; }
+  .song-card.active .song-title { color: #c33; }
+  .song-meta { font-size: .75rem; color: #888; margin-top: 3px; }
   .section-header {
-    font-size: 1.1rem; color: #fa0; padding: 16px 12px 8px;
-    border-bottom: 1px solid #333; margin-bottom: 4px;
+    font-size: 1.1rem; color: #3a9; padding: 16px 12px 8px;
+    border-bottom: 1px solid #ccc; margin-bottom: 4px;
   }
   .delete-btn {
     margin-left: auto; flex-shrink: 0;
-    background: none; border: none; color: #555;
+    background: none; border: none; color: #bbb;
     font-size: 1.1rem; cursor: pointer; padding: 4px 8px;
     border-radius: 4px; transition: color .2s;
   }
   .delete-btn:hover { color: #f44; }
   #add-panel {
     display: none; flex-direction: column; gap: 8px;
-    background: #1a1a1a; border-radius: 8px;
+    background: #ddeedd; border-radius: 8px;
     padding: 14px; margin-top: 10px;
     width: 100%; max-width: 640px;
   }
   #add-panel.visible { display: flex; }
-
   #add-panel input {
-    padding: 8px 12px; border-radius: 8px; border: 1px solid #444;
-    background: #222; color: #eee; font-size: .9rem; font-family: inherit;
+    padding: 8px 12px; border-radius: 8px; border: 1px solid #bbb;
+    background: #f0f7ee; color: #222; font-size: .9rem; font-family: inherit;
   }
-  #add-panel input::placeholder { color: #666; }
+  #add-panel input::placeholder { color: #999; }
   #btn-add-confirm {
     padding: 8px 16px; border: none; border-radius: 20px;
     background: #c00; color: #fff; cursor: pointer;
@@ -125,7 +124,6 @@
 </style>
 </head>
 <body>
-
 <div id="player-section">
   <div id="player-title">點擊歌曲開始播放</div>
   <div id="player-wrapper">
@@ -133,10 +131,9 @@
     <div id="error-overlay">
       <p>⚠️ 此影片已停用內嵌播放<br>請前往 YouTube 觀看</p>
       <a id="btn-watch-yt" href="#" target="_blank" rel="noopener">▶ 在 YouTube 上觀看</a>
-      <button id="btn-skip-error" >⏭ 跳過，播放下一首</button>
+      <button id="btn-skip-error">⏭ 跳過，播放下一首</button>
     </div>
   </div>
-
   <div id="controls">
     <button id="btn-prev">⏮ 上一首</button>
     <button id="btn-order">▶ 順序播放</button>
@@ -148,36 +145,30 @@
     <span  id="mode-label">順序播放</span>
     <span  id="ad-status">⏳ 廣告跳過中…</span>
   </div>
-
   <div id="add-panel">
     <input id="inp-url"     placeholder="YouTube URL 或 Video ID（必填）">
     <input id="inp-title"   placeholder="歌曲名稱（必填）">
     <input id="inp-meta"    placeholder="歌手 / 來源（可選）">
     <input id="inp-section" placeholder="新分類標題（可選，只填第一首需要）">
-    <button id="btn-add-confirm" >➕ 加入歌單</button>
+    <button id="btn-add-confirm">➕ 加入歌單</button>
   </div>
 </div>
-
 <div id="song-list">
   <h1>🎵 廣東歌播放器</h1>
   <p class="subtitle">點擊播放 · 支援順序 / 隨機模式</p>
 </div>
-
 <!-- YouTube IFrame Player API -->
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
-// ========================================================
-// App State
-// ========================================================
 // ═══════════════════════════════════════════════════════════════
 //  SONG LIST  —  Add or remove songs here.
 //  Each entry: { vid: "YouTube_Video_ID", title: "...", meta: "..." }
+//  Add section:"Label" to the first song of each group.
 // ═══════════════════════════════════════════════════════════════
 let SONGS = [
-  // ── 廣東歌; 老歌 ──────────────────────────────────────────
-  // add section to the first song of that section
- { vid:"qu_FSptjRic", title:"黄家驹 - 海闊天空", meta:"", section:"🎵 廣東歌・老歌" },
- { vid:"_B8RaLCNUZw", title:"周杰倫 - 聽媽媽的話", meta:"" },
+  // ── 廣東歌・老歌 ─────────────────────────────────────────
+  { vid:"qu_FSptjRic", title:"黄家驹 - 海闊天空", meta:"", section:"🎵 廣東歌・老歌" },
+  { vid:"_B8RaLCNUZw", title:"周杰倫 - 聽媽媽的話", meta:"" },
   { vid:"CtRQVrhg1HY", title:"黄家驹 - 真的爱你", meta:"" },
   { vid:"BzgulyQImqQ", title:"汪明荃 - 万水千山总是情", meta:"" },
   { vid:"a1kGM46AnYA", title:"東方之珠 (粵語版)", meta:"" },
@@ -210,16 +201,16 @@ let SONGS = [
   { vid:"PpVNdL9Wz_M", title:"葉麗儀 - 上海灘", meta:"" },
   { vid:"bv_cEeDlop0", title:"邓丽君 - 月亮代表我的的心", meta:"" },
   { vid:"OMVlGjmppeY", title:"邓丽君 - 甜蜜蜜", meta:"" },
-  { vid:"OfIFA-V6Zec", title:"鄧紫棋- 海闊天空", meta:"" },
+  { vid:"OfIFA-V6Zec", title:"鄧紫棋 - 海闊天空", meta:"" },
   { vid:"8IB8Kb5F1jA", title:"伍思凱 - 特別的愛給特別的你", meta:"" },
   { vid:"n3B5XpRvyhI", title:"陳慧嫻 - 千千闋歌", meta:"" },
   { vid:"LE6vRCpcbb8", title:"邓丽君 - 我只在乎你", meta:"" },
-  { vid:"mw90POFCMUQ", title:"周杰伦 费玉清 -  千里之外", meta:"" },
+  { vid:"mw90POFCMUQ", title:"周杰伦 费玉清 - 千里之外", meta:"" },
   { vid:"GsthcUsNL-M", title:"王傑 - 誰明浪子心", meta:"" },
   { vid:"Z8vdOf9EUG4", title:"相思風雨中 – 張學友+湯寳如；相逢何必曾相識 – 蔣志光+韋綺珊；心仍是冷 – 梅艷芳+倫永亮；再見亦是朋友 – 曾航生+何婉盈", meta:"" },
-  { vid:"FIkgv1KS3r8", title:"任賢齊 蟲哥 - 愛江山更愛美人", meta:""},
-  { vid:"t2B_SPk77M0", title:"姜育恒 - 再回首", meta:""},
-    { vid:"7Fu9DJGRU8Y", title:"陳百強 - 今宵多珍重", meta:"" },
+  { vid:"FIkgv1KS3r8", title:"任賢齊 蟲哥 - 愛江山更愛美人", meta:"" },
+  { vid:"t2B_SPk77M0", title:"姜育恒 - 再回首", meta:"" },
+  { vid:"7Fu9DJGRU8Y", title:"陳百強 - 今宵多珍重", meta:"" },
   { vid:"kNydBo9Hjeg", title:"許秋怡 張智霖 - 现代爱情故事", meta:"" },
   { vid:"ykg3HXbwe-M", title:"刘文正 - 迟到", meta:"" },
   { vid:"REEOBTBVPmg", title:"谭咏麟 - 一生中最爱", meta:"" },
@@ -233,34 +224,26 @@ let SONGS = [
   { vid:"TU0kfauKL98", title:"鄧岳章 - 情意結", meta:"" },
   { vid:"aKIWOy8rOnk", title:"刘德华 - 暗里着迷", meta:"" },
   { vid:"jgljLuTwjno", title:"一人一首成名曲", meta:"" },
-
-  // ── 新馬師曾 ────────────────────────────────────────────────
-  // add section to the first song of that section
-  { vid:"ZSkWuTHOnrM", title:"新馬師曾 - 萬惡淫為首之乞食 (東華清晰版)", meta:"", section:"新馬師曾"  },
+  // ── 新馬師曾 ─────────────────────────────────────────────
+  { vid:"ZSkWuTHOnrM", title:"新馬師曾 - 萬惡淫為首之乞食 (東華清晰版)", meta:"", section:"新馬師曾" },
   { vid:"jXuc90xKqIg", title:"新馬師曾 - 粵曲串燒", meta:"" },
   { vid:"56fb31b1D-E", title:"新馬師曾 - 光緒皇夜祭珍妃［東華籌款義唱］", meta:"" },
   { vid:"18AGStg08ig", title:"萬惡淫為首－新馬師曾、任冰兒、許英秀、梁醒波、陳嘉鳴、高麗、陳錦棠", meta:"" },
   { vid:"_Ayt8aYymTI", title:"新馬師曾 - 郎歸晚", meta:"" },
   { vid:"CwXRIdnFq-Y", title:"新馬師曾 - 客途秋恨", meta:"" },
-  { vid:"OrHaZLP9KtA", title:" (新馬師曾 曾慧) 琵琶行", meta:"" },
-
-  // ── 紅線女 ──────────────────────────────────────────────────
-  // add section to the first song of that section
-  { vid:"t_b9yp6xIHY", title:"紅線女 - 昭君出塞", meta:"", section:"紅線女"}, 
+  { vid:"OrHaZLP9KtA", title:"(新馬師曾 曾慧) 琵琶行", meta:"" },
+  // ── 紅線女 ───────────────────────────────────────────────
+  { vid:"t_b9yp6xIHY", title:"紅線女 - 昭君出塞", meta:"", section:"紅線女" },
   { vid:"uOJunyJHR6U", title:"紅線女 - 柴房自嘆", meta:"" },
-  { vid:"C9uR4hyJC04", title:"紅線女 - 香君守楼", meta:""},
+  { vid:"C9uR4hyJC04", title:"紅線女 - 香君守楼", meta:"" },
   { vid:"Jgu541ZEYXw", title:"紅線女 - 慈母淚", meta:"" },
 ];
 
-// ── Persistence ──────────────────────────────────────────────
-// const STORAGE_KEY = 'cantonese_songs';
-// const DEFAULT_SONGS = SONGS.slice(); // snapshot of hardcoded list
-
-
+// ========================================================
+// App
+// ========================================================
 const App = {
-
     STORAGE_KEY: 'cantonese_songs',
-
     state: {
         songs: [],
         defaultSongs: [],
@@ -269,408 +252,198 @@ const App = {
         mode: 'order',
         player: null
     },
-
     elements: {},
-
 
     // ====================================================
     // Init
     // ====================================================
-
     init(initialSongs) {
-
         this.cacheElements();
-
         this.state.songs = structuredClone(initialSongs);
         this.state.defaultSongs = structuredClone(initialSongs);
-
         this.loadSongs();
-
         this.buildPlaylist();
         this.bindEvents();
         this.renderSongs();
     },
 
     cacheElements() {
-
         this.elements = {
-            songList: document.getElementById('song-list'),
-            playerTitle: document.getElementById('player-title'),
-            modeLabel: document.getElementById('mode-label'),
-            wrapper: document.getElementById('player-wrapper'),
-            addPanel: document.getElementById('add-panel'),
-            overlay: document.getElementById('error-overlay'),
-
-            btnOrder: document.getElementById('btn-order'),
-            btnShuffle: document.getElementById('btn-shuffle'),
+            songList:       document.getElementById('song-list'),
+            playerTitle:    document.getElementById('player-title'),
+            modeLabel:      document.getElementById('mode-label'),
+            wrapper:        document.getElementById('player-wrapper'),
+            addPanel:       document.getElementById('add-panel'),
+            overlay:        document.getElementById('error-overlay'),
+            btnOrder:       document.getElementById('btn-order'),
+            btnShuffle:     document.getElementById('btn-shuffle'),
             btnToggleVideo: document.getElementById('btn-toggle-video'),
-
-            inpURL: document.getElementById('inp-url'),
-            inpTitle: document.getElementById('inp-title'),
-            inpMeta: document.getElementById('inp-meta'),
-            inpSection: document.getElementById('inp-section')
+            btnWatchYt:     document.getElementById('btn-watch-yt'),
+            adStatus:       document.getElementById('ad-status'),
+            inpURL:         document.getElementById('inp-url'),
+            inpTitle:       document.getElementById('inp-title'),
+            inpMeta:        document.getElementById('inp-meta'),
+            inpSection:     document.getElementById('inp-section'),
         };
-
     },
-
 
     // ====================================================
     // Events
     // ====================================================
-
     bindEvents() {
+        document.getElementById('btn-prev')
+            .addEventListener('click', () => this.playPrev());
+        document.getElementById('btn-next')
+            .addEventListener('click', () => this.playNext());
+        document.getElementById('btn-order')
+            .addEventListener('click', () => this.setMode('order'));
+        document.getElementById('btn-shuffle')
+            .addEventListener('click', () => this.setMode('shuffle'));
+        document.getElementById('btn-toggle-video')
+            .addEventListener('click', () => this.toggleVideo());
+        document.getElementById('btn-add-song')
+            .addEventListener('click', () => this.elements.addPanel.classList.toggle('visible'));
+        document.getElementById('btn-add-confirm')
+            .addEventListener('click', () => this.addSong());
+        document.getElementById('btn-reset')
+            .addEventListener('click', () => this.resetSongs());
+        document.getElementById('btn-skip-error')
+            .addEventListener('click', () => this.playNext());
 
-        document
-            .getElementById('btn-prev')
-            .addEventListener('click',()=>this.playPrev());
-
-        document
-            .getElementById('btn-next')
-            .addEventListener('click',()=>this.playNext());
-
-        document
-            .getElementById('btn-order')
-            .addEventListener('click',()=>this.setMode('order'));
-
-        document
-            .getElementById('btn-shuffle')
-            .addEventListener('click',()=>this.setMode('shuffle'));
-
-        document
-            .getElementById('btn-toggle-video')
-            .addEventListener('click',()=>this.toggleVideo());
-
-        document
-            .getElementById('btn-add-song')
-            .addEventListener('click',()=>{
-                this.elements.addPanel.classList.toggle('visible');
-            });
-
-        document
-            .getElementById('btn-add-confirm')
-            .addEventListener('click',()=>this.addSong());
-
-        document
-            .getElementById('btn-reset')
-            .addEventListener('click', ()=>this.resetSongs());
-
-        document
-            .getElementById('btn-skip-error')
-            .addEventListener('click', ()=>this.playNext());
+        // Keyboard shortcuts: ← prev  → next
+        document.addEventListener('keydown', e => {
+            if (e.target.tagName === 'INPUT') return;
+            if (e.key === 'ArrowRight') this.playNext();
+            if (e.key === 'ArrowLeft')  this.playPrev();
+        });
     },
-
 
     // ====================================================
     // Storage
     // ====================================================
-
     saveSongs() {
-
-        localStorage.setItem(
-            this.STORAGE_KEY,
-            JSON.stringify(this.state.songs)
-        );
-
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.state.songs));
     },
-
     loadSongs() {
-
         try {
-
-            const saved=localStorage.getItem(
-                this.STORAGE_KEY
-            );
-
-            if(saved){
-
-                this.state.songs=
-                    JSON.parse(saved);
-
-            }
-
-        }
-        catch(err){
-
+            const saved = localStorage.getItem(this.STORAGE_KEY);
+            if (saved) this.state.songs = JSON.parse(saved);
+        } catch(err) {
             console.error(err);
-
         }
-
     },
-
 
     // ====================================================
     // Playlist
     // ====================================================
-
     buildPlaylist() {
-
-        this.state.playlist =
-            [...Array(
-                this.state.songs.length
-            ).keys()];
-
-        if(this.state.mode==="shuffle"){
-
-            this.shuffle(
-                this.state.playlist
-            );
-
-        }
-
+        this.state.playlist = [...Array(this.state.songs.length).keys()];
+        if (this.state.mode === 'shuffle') this.shuffle(this.state.playlist);
     },
-
-    shuffle(arr){
-
-        for(
-            let i=arr.length-1;
-            i>0;
-            i--
-        ){
-
-            const j=
-                Math.floor(
-                    Math.random()*(i+1)
-                );
-
-            [arr[i],arr[j]]=
-            [arr[j],arr[i]];
-
+    shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
         }
-
     },
-
-
-    setMode(mode){
-
-        this.state.mode=mode;
+    setMode(mode) {
+        this.state.mode = mode;
         this.buildPlaylist();
-        this.elements.modeLabel.textContent=
-            mode==="shuffle"
-            ? "🔀 隨機播放中"
-            : "▶ 順序播放中";
+        this.elements.modeLabel.textContent =
+            mode === 'shuffle' ? '🔀 隨機播放中' : '▶ 順序播放中';
         this.elements.btnOrder.style.background   = mode === 'order'   ? '#c00' : '#333';
         this.elements.btnShuffle.style.background = mode === 'shuffle' ? '#c00' : '#333';
     },
 
-
     // ====================================================
     // Render
     // ====================================================
-
-    renderSongs(){
-
-        const container=
-            this.elements.songList;
-
-        container
-            .querySelectorAll(
-                '.song-card,.section-header'
-            )
-            .forEach(el=>el.remove());
-
-        this.state.songs.forEach(
-            (song,index)=>{
-
-            if(song.section){
-
-                const section=
-                    document.createElement(
-                        'div'
-                    );
-
-                section.className=
-                    'section-header';
-
-                section.textContent=
-                    song.section;
-
-                container.appendChild(
-                    section
-                );
-
+    renderSongs() {
+        const container = this.elements.songList;
+        container.querySelectorAll('.song-card,.section-header').forEach(el => el.remove());
+        this.state.songs.forEach((song, index) => {
+            if (song.section) {
+                const hdr = document.createElement('div');
+                hdr.className = 'section-header';
+                hdr.textContent = song.section;
+                container.appendChild(hdr);
             }
+            container.appendChild(this.createSongCard(song, index));
+        });
+    },
 
-            container.appendChild(
-                this.createSongCard(
-                    song,
-                    index
-                )
-            );
+    createSongCard(song, index) {
+        const card = document.createElement('div');
+        card.className = 'song-card';
+        card.dataset.idx = index;
+        card.addEventListener('click', () => this.playSong(index));
 
+        const rank = document.createElement('span');
+        rank.className = 'rank';
+        rank.textContent = index + 1;
+
+        const img = document.createElement('img');
+        img.className = 'thumb';
+        img.src = `https://img.youtube.com/vi/${song.vid}/mqdefault.jpg`;
+        img.alt = song.title;
+        img.loading = 'lazy';
+
+        const info = document.createElement('div');
+        info.className = 'song-info';
+
+        const title = document.createElement('div');
+        title.className = 'song-title';
+        title.textContent = song.title;
+
+        const meta = document.createElement('div');
+        meta.className = 'song-meta';
+        meta.textContent = song.meta || '';
+
+        const del = document.createElement('button');
+        del.className = 'delete-btn';
+        del.textContent = '🗑';
+        del.addEventListener('click', e => {
+            e.stopPropagation();
+            this.deleteSong(index);
         });
 
-    },
-
-
-    createSongCard(song,index){
-
-        const card=
-            document.createElement(
-                'div'
-            );
-
-        card.className='song-card';
-
-        card.dataset.idx=index;
-
-        card.addEventListener(
-            'click',
-            ()=>this.playSong(index)
-        );
-
-        const rank=
-            document.createElement(
-                'span'
-            );
-
-        rank.className='rank';
-        rank.textContent=index+1;
-
-
-        const img=
-            document.createElement(
-                'img'
-            );
-
-        img.className='thumb';
-
-        img.src=
-        `https://img.youtube.com/vi/${song.vid}/mqdefault.jpg`;
-
-        img.loading='lazy';
-
-
-        const info=
-            document.createElement(
-                'div'
-            );
-
-        info.className='song-info';
-
-
-        const title=
-            document.createElement(
-                'div'
-            );
-
-        title.className='song-title';
-
-        title.textContent=
-            song.title;
-
-
-        const meta=
-            document.createElement(
-                'div'
-            );
-
-        meta.className='song-meta';
-
-        meta.textContent=
-            song.meta || "";
-
-
-        const del=
-            document.createElement(
-                'button'
-            );
-
-        del.className=
-            'delete-btn';
-
-        del.textContent='🗑';
-
-        del.addEventListener(
-            'click',
-            e=>{
-
-                e.stopPropagation();
-
-                this.deleteSong(
-                    index
-                );
-
-            }
-        );
-
-        info.append(
-            title,
-            meta
-        );
-
-        card.append(
-            rank,
-            img,
-            info,
-            del
-        );
-
+        info.append(title, meta);
+        card.append(rank, img, info, del);
         return card;
-
     },
-
 
     // ====================================================
     // Song actions
     // ====================================================
-
-    playSong(index){
-        this.elements.overlay.classList.remove('visible');   // ← hide error overlay
+    playSong(index) {
+        this.elements.overlay.classList.remove('visible');
         const song = this.state.songs[index];
-        this.state.currentPos =
-        this.state.playlist.indexOf(index);
+        this.state.currentPos = this.state.playlist.indexOf(index);
         this.elements.playerTitle.textContent = song.title;
-        if (this.state.player){
-            this.state.player.loadVideoById(song.vid);
-        }
-        document.querySelectorAll('.song-card')
-            .forEach(x => x.classList.remove('active'));
+        if (this.state.player) this.state.player.loadVideoById(song.vid);
+        document.querySelectorAll('.song-card').forEach(x => x.classList.remove('active'));
         const card = document.querySelector(`[data-idx="${index}"]`);
-        if (card){
+        if (card) {
             card.classList.add('active');
-            card.scrollIntoView({ behavior:'smooth', block:'nearest' });  // ← scroll to card
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     },
 
-    playNext(){
-
-        const s=this.state;
-
-        s.currentPos=
-        (
-            s.currentPos+1
-        )%
-        s.playlist.length;
-
-        this.playSong(
-            s.playlist[
-                s.currentPos
-            ]
-        );
-
+    playNext() {
+        const s = this.state;
+        s.currentPos = (s.currentPos + 1) % s.playlist.length;
+        this.playSong(s.playlist[s.currentPos]);
     },
 
-    playPrev(){
-
-        const s=this.state;
-
-        s.currentPos=
-        (
-            s.currentPos-1+
-            s.playlist.length
-        )
-        %
-        s.playlist.length;
-
-        this.playSong(
-            s.playlist[
-                s.currentPos
-            ]
-        );
-
+    playPrev() {
+        const s = this.state;
+        if (s.currentPos === -1) { this.playSong(0); return; }
+        s.currentPos = (s.currentPos - 1 + s.playlist.length) % s.playlist.length;
+        this.playSong(s.playlist[s.currentPos]);
     },
 
     deleteSong(index) {
+        if (this.state.playlist[this.state.currentPos] === index) this.stopAdCheck();
         const curSongIdx = this.state.playlist[this.state.currentPos];
         this.state.songs.splice(index, 1);
         this.buildPlaylist();
@@ -683,70 +456,37 @@ const App = {
     // ====================================================
     // Add Song
     // ====================================================
-
-    parseVideoId(input){
-
-        const regex=
-        /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([^?&/]{11})/;
-
-        return (
-            input.match(regex)?.[1]
-            || input.trim()
-        );
-
+    parseVideoId(input) {
+        const regex = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([^?&/]{11})/;
+        return input.match(regex)?.[1] || input.trim();
     },
 
+    addSong() {
+        const vid     = this.parseVideoId(this.elements.inpURL.value);
+        const title   = this.elements.inpTitle.value.trim();
+        const meta    = this.elements.inpMeta.value.trim();
+        const section = this.elements.inpSection.value.trim();
 
-    addSong(){
-        const vid=
-            this.parseVideoId(
-                this.elements.inpURL.value
-            );
+        if (!vid || vid.length !== 11) { alert('請輸入有效的 YouTube URL 或 11位 Video ID'); return; }
+        if (!title)                    { alert('請輸入歌曲名稱'); return; }
 
-        const title=
-            this.elements.inpTitle
-            .value.trim();
+        const entry = { vid, title, meta };
+        if (section) entry.section = section;
 
-        if(
-            !vid ||
-            vid.length!==11
-        ){
-            alert(
-                'Invalid video'
-            );
-            return;
-        }
-
-        if (!title) { 
-           alert('請輸入歌曲名稱'); 
-           return;
-        }
-
-        this.state.songs.push({
-            vid,
-            title,
-            meta:
-                this.elements
-                .inpMeta.value,
-            section:
-                this.elements
-                .inpSection.value
-
-        });
-
+        this.state.songs.push(entry);
         this.buildPlaylist();
         this.saveSongs();
         this.renderSongs();
 
-        [this.elements.inpURL, 
-         this.elements.inpTitle,
-         this.elements.inpMeta, 
-         this.elements.inpSection]
-        .forEach(el => el.value = '');
+        [this.elements.inpURL, this.elements.inpTitle,
+         this.elements.inpMeta, this.elements.inpSection]
+            .forEach(el => el.value = '');
         this.elements.addPanel.classList.remove('visible');
     },
 
-    // Start ad check and stop it after a certain time. So users do not need click the skip ad button manually.
+    // ====================================================
+    // Ad-skip
+    // ====================================================
     startAdCheck() {
         this.stopAdCheck();
         this._adInterval = setInterval(() => {
@@ -757,10 +497,10 @@ const App = {
                 const duration = p.getDuration();
                 const current  = p.getCurrentTime();
                 if (duration > 0 && duration <= 60 && current < duration - 1) {
-                    document.getElementById('ad-status').style.display = 'inline';
+                    this.elements.adStatus.style.display = 'inline';
                     p.seekTo(duration, true);
                 } else {
-                    document.getElementById('ad-status').style.display = 'none';
+                    this.elements.adStatus.style.display = 'none';
                 }
             } catch(_) {}
         }, 800);
@@ -771,105 +511,59 @@ const App = {
             clearInterval(this._adInterval);
             this._adInterval = null;
         }
-        document.getElementById('ad-status').style.display = 'none';
+        if (this.elements.adStatus) this.elements.adStatus.style.display = 'none';
     },
 
     // ====================================================
-    // UI
+    // UI helpers
     // ====================================================
-
-    toggleVideo(){
-
-        const hidden=
-        this.elements.wrapper
-        .classList.toggle(
-            'hidden-video'
-        );
-
-        this.elements
-        .btnToggleVideo
-        .textContent=
-
-        hidden
-        ? '📺 顯示影片'
-        : '🎵 純音樂模式';
-
+    toggleVideo() {
+        const hidden = this.elements.wrapper.classList.toggle('hidden-video');
+        this.elements.btnToggleVideo.textContent = hidden ? '📺 顯示影片' : '🎵 純音樂模式';
     },
 
-    resetSongs(){
-
-        if(!confirm('重置為預設歌單？'))
-            return;
-    
-        this.state.songs =
-            structuredClone(
-                this.state.defaultSongs
-            );
-    
-        localStorage.removeItem(
-            this.STORAGE_KEY
-        );
-
+    resetSongs() {
+        if (!confirm('重置為預設歌單？所有新增 / 刪除將清除。')) return;
+        this.state.songs = structuredClone(this.state.defaultSongs);
+        localStorage.removeItem(this.STORAGE_KEY);
         this.state.currentPos = -1;
         this.buildPlaylist();
         this.renderSongs();
     },
-
-
 };
 
-
 // ========================================================
-// YouTube callback
+// YouTube IFrame API callback
 // ========================================================
-
-function onYouTubeIframeAPIReady(){
-
-    App.state.player=
-    new YT.Player(
-        'ytplayer',
-        {
-
-            playerVars:{
-                autoplay:1,
-                rel:0
+function onYouTubeIframeAPIReady() {
+    App.state.player = new YT.Player('ytplayer', {
+        playerVars: { autoplay: 1, rel: 0 },
+        events: {
+            onReady: () => App.playSong(0),
+            onStateChange: e => {
+                if (e.data === YT.PlayerState.PLAYING) {
+                    App.startAdCheck();
+                } else if (e.data === YT.PlayerState.ENDED) {
+                    App.stopAdCheck();
+                    setTimeout(() => App.playNext(), 1000);
+                } else {
+                    App.stopAdCheck();
+                }
             },
-
-            events:{
-
-                onReady:()=>{
-                    App.playSong(0)
-                },
-
-                onStateChange: e => {
-                    if (e.data === YT.PlayerState.PLAYING) {
-                        App.startAdCheck();
-                    } else if (e.data === YT.PlayerState.ENDED) {
-                        App.stopAdCheck();
-                        setTimeout(() => App.playNext(), 1000);
-                    } else {
-                        App.stopAdCheck();
-                    }
-                },
-
-                onError: e => {
-                    if (e.data === 150 || e.data === 153) {
-                        const vid = App.state.songs[App.state.playlist[App.state.currentPos]].vid;
-                        document.getElementById('btn-watch-yt').href = 'https://www.youtube.com/watch?v=' + vid;
-                        document.getElementById('error-overlay').classList.add('visible');
-                    }
+            onError: e => {
+                if (e.data === 150 || e.data === 153) {
+                    const vid = App.state.songs[App.state.playlist[App.state.currentPos]].vid;
+                    App.elements.btnWatchYt.href = 'https://www.youtube.com/watch?v=' + vid;
+                    App.elements.overlay.classList.add('visible');
                 }
             }
         }
-    );
-
+    });
 }
 
-
 // ========================================================
-// Start App
+// Start
 // ========================================================
-
 App.init(SONGS);
 </script>
 </body>
