@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ABBA Songs Player</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f0f7ee; color: #222;
+  }
+  #player-section {
+    background: #111;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 20px 16px 12px;
+    position: sticky; top: 0; z-index: 10;
+    box-shadow: 0 4px 20px rgba(0,0,0,.6);
+  }
+  #player-title {
+    font-size: 1rem; color: #ddd; margin-bottom: 10px;
+    text-align: center; max-width: 640px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #player-wrapper {
+    width: 100%; max-width: 640px; aspect-ratio: 16/9;
+    position: relative; border-radius: 6px; overflow: hidden;
+    background: #000; transition: all .3s ease;
+  }
+  #player-wrapper.hidden-video {
+    aspect-ratio: unset; height: 0; overflow: hidden; margin: 0;
+  }
+  #ytplayer { width: 100%; height: 100%; border: none; }
+  #error-overlay {
+    display: none; position: absolute; inset: 0;
+    background: #d8edd8; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px; text-align: center; padding: 20px;
+  }
+  #error-overlay.visible { display: flex; }
+  #error-overlay p { color: #555; font-size: .95rem; }
+  #btn-watch-yt {
+    padding: 10px 24px; border: none; border-radius: 20px;
+    background: #f00; color: #fff; font-size: 1rem;
+    cursor: pointer; font-family: inherit;
+    text-decoration: none; display: inline-block;
+  }
+  #btn-watch-yt:hover { background: #c00; }
+  #btn-skip-error {
+    padding: 8px 20px; border: 1px solid #555; border-radius: 20px;
+    background: transparent; color: #aaa; font-size: .85rem;
+    cursor: pointer; font-family: inherit;
+  }
+  #btn-skip-error:hover { background: #333; }
+  #controls {
+    display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;
+    justify-content: center;
+  }
+  #controls button {
+    padding: 8px 16px; border: none; border-radius: 20px;
+    font-size: .85rem; cursor: pointer; font-family: inherit;
+    transition: background .2s; color: #eee; background: #333;
+  }
+  #controls button:hover { filter: brightness(1.3); }
+  #btn-order   { background: #c00; color: #fff; }
+  #mode-label  { font-size: .78rem; color: #aaa; align-self: center; }
+  #ad-status   { font-size: .75rem; color: #fa0; align-self: center; display: none; }
+  #song-list { max-width: 760px; margin: 24px auto; padding: 0 12px 40px; }
+  h1 { text-align: center; font-size: 1.6rem; color: #48f; margin-bottom: 6px; }
+  .subtitle { text-align: center; color: #888; font-size: .85rem; margin-bottom: 20px; }
+  .song-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 8px;
+    cursor: pointer; transition: background .15s;
+    border-bottom: 1px solid #ddd;
+  }
+  .song-card:hover  { background: #ddeedd; }
+  .song-card.active { background: #c8ecd0; border-left: 3px solid #f44; }
+  .rank { width: 32px; text-align: right; font-size: .85rem; color: #999; flex-shrink: 0; }
+  .song-card.active .rank { color: #f44; font-weight: bold; }
+  .thumb {
+    width: 72px; height: 54px; object-fit: cover;
+    border-radius: 4px; flex-shrink: 0; background: #ccc;
+  }
+  .song-info { flex: 1; min-width: 0; }
+  .song-title {
+    font-size: .95rem; color: #222;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .song-card.active .song-title { color: #c33; }
+  .song-meta { font-size: .75rem; color: #888; margin-top: 3px; }
+  .section-header {
+    font-size: 1.1rem; color: #3a9; padding: 16px 12px 8px;
+    border-bottom: 1px solid #ccc; margin-bottom: 4px;
+  }
+  .delete-btn {
+    margin-left: auto; flex-shrink: 0;
+    background: none; border: none; color: #bbb;
+    font-size: 1.1rem; cursor: pointer; padding: 4px 8px;
+    border-radius: 4px; transition: color .2s;
+  }
+  .delete-btn:hover { color: #f44; }
+  #add-panel {
+    display: none; flex-direction: column; gap: 8px;
+    background: #ddeedd; border-radius: 8px;
+    padding: 14px; margin-top: 10px;
+    width: 100%; max-width: 640px;
+  }
+  #add-panel.visible { display: flex; }
+  #add-panel input {
+    padding: 8px 12px; border-radius: 8px; border: 1px solid #bbb;
+    background: #f0f7ee; color: #222; font-size: .9rem; font-family: inherit;
+  }
+  #add-panel input::placeholder { color: #999; }
+  #btn-add-confirm {
+    padding: 8px 16px; border: none; border-radius: 20px;
+    background: #c00; color: #fff; cursor: pointer;
+    font-family: inherit; font-size: .9rem;
+  }
+</style>
+</head>
+<body>
+<div id="player-section">
+  <div id="player-title">Click a song to start playing</div>
+  <div id="player-wrapper">
+    <div id="ytplayer"></div>
+    <div id="error-overlay">
+      <p>⚠️ This video has disabled embedded playback.<br>Please watch it on YouTube.</p>
+      <a id="btn-watch-yt" href="#" target="_blank" rel="noopener">▶ Watch on YouTube</a>
+      <button id="btn-skip-error">⏭ Skip, play next</button>
+    </div>
+  </div>
+  <div id="controls">
+    <button id="btn-prev">⏮ Prev</button>
+    <button id="btn-order">▶ In Order</button>
+    <button id="btn-shuffle">🔀 Shuffle</button>
+    <button id="btn-next">⏭ Next</button>
+    <button id="btn-toggle-video">🎵 Audio Only</button>
+    <button id="btn-add-song">➕ Add Song</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span  id="mode-label">Playing in order</span>
+    <span  id="ad-status">⏳ Skipping ad…</span>
+  </div>
+  <div id="add-panel">
+    <input id="inp-url"     placeholder="YouTube URL or Video ID (required)">
+    <input id="inp-title"   placeholder="Song title (required)">
+    <input id="inp-meta"    placeholder="Artist / source (optional)">
+    <input id="inp-section" placeholder="New section header (optional, first song only)">
+    <button id="btn-add-confirm">➕ Add to playlist</button>
+  </div>
+</div>
+<div id="song-list">
+  <h1>🎵 ABBA Songs Player</h1>
+  <p class="subtitle">Click to play · Order or Shuffle mode</p>
+</div>
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  SONG LIST
+// ═══════════════════════════════════════════════════════════════
+let SONGS = [
+  // ── Early Hits (1973–1975) ───────────────────────────────
+  { vid:"Sj_9CiNkkn4", title:"Waterloo",              meta:"ABBA (Official Music Video)", section:"🌟 Early Hits (1973–1975)" },
+  { vid:"SnjzEsKM95I", title:"Honey, Honey",          meta:"ABBA (1976)" },
+  { vid:"cvChjHcABPA", title:"SOS",                   meta:"ABBA (Official Video)" },
+  { vid:"unfzfe8f9NI", title:"Mamma Mia",             meta:"ABBA (Official Music Video)" },
+  // ── Greatest Hits (1976–1977) ────────────────────────────
+  { vid:"dQsjAbZDx-4", title:"Fernando",              meta:"ABBA (Official Music Video)", section:"💃 Greatest Hits (1976–1977)" },
+  { vid:"xFrGuyw1V8s", title:"Dancing Queen",         meta:"ABBA (Official Music Video)" },
+  { vid:"ETxmCCsMoD0", title:"Money, Money, Money",   meta:"ABBA (Official Video)" },
+  { vid:"iUrzicaiRLU", title:"Knowing Me, Knowing You", meta:"ABBA (Official Music Video)" },
+  { vid:"ZbqF0Blzh4k", title:"The Name of the Game", meta:"ABBA (Official Video)" },
+  // ── The Voulez-Vous Era (1978–1979) ─────────────────────
+  { vid:"-crgQGdpZR0", title:"Take a Chance on Me",  meta:"ABBA (Official Video)", section:"🎶 Voulez-Vous Era (1978–1979)" },
+  { vid:"p4QqMKe3rwY", title:"Chiquitita",            meta:"ABBA (Official Music Video)" },
+  { vid:"WkL7Fkigfn8", title:"Does Your Mother Know", meta:"ABBA (Official Video)" },
+  { vid:"65k36nvwbYA", title:"Voulez-Vous",           meta:"ABBA (Official Music Video, Remastered)" },
+  { vid:"GHddJnNo_BQ", title:"Angeleyes",             meta:"ABBA" },
+  { vid:"XEjLoHdbVeE", title:"Gimme! Gimme! Gimme! (A Man After Midnight)", meta:"ABBA (Official Music Video)" },
+  // ── The Super Trouper Era (1980–1982) ───────────────────
+  { vid:"BshxCIjNEjY", title:"Super Trouper",         meta:"ABBA (Official Video)", section:"🏆 Super Trouper Era (1980–1982)" },
+  { vid:"92cwKCU8Z5c", title:"The Winner Takes It All", meta:"ABBA (Official Video)" },
+  { vid:"ulZQTrV8QlQ", title:"Lay All Your Love on Me", meta:"ABBA (Official Lyric Video)" },
+];
+
+// ========================================================
+// App
+// ========================================================
+const App = {
+    STORAGE_KEY: 'abba_songs',
+    state: {
+        songs: [],
+        defaultSongs: [],
+        playlist: [],
+        currentPos: -1,
+        mode: 'order',
+        player: null
+    },
+    elements: {},
+
+    init(initialSongs) {
+        this.cacheElements();
+        this.state.songs = structuredClone(initialSongs);
+        this.state.defaultSongs = structuredClone(initialSongs);
+        this.loadSongs();
+        this.buildPlaylist();
+        this.bindEvents();
+        this.renderSongs();
+    },
+
+    cacheElements() {
+        this.elements = {
+            songList:       document.getElementById('song-list'),
+            playerTitle:    document.getElementById('player-title'),
+            modeLabel:      document.getElementById('mode-label'),
+            wrapper:        document.getElementById('player-wrapper'),
+            addPanel:       document.getElementById('add-panel'),
+            overlay:        document.getElementById('error-overlay'),
+            btnOrder:       document.getElementById('btn-order'),
+            btnShuffle:     document.getElementById('btn-shuffle'),
+            btnToggleVideo: document.getElementById('btn-toggle-video'),
+            btnWatchYt:     document.getElementById('btn-watch-yt'),
+            adStatus:       document.getElementById('ad-status'),
+            inpURL:         document.getElementById('inp-url'),
+            inpTitle:       document.getElementById('inp-title'),
+            inpMeta:        document.getElementById('inp-meta'),
+            inpSection:     document.getElementById('inp-section'),
+        };
+    },
+
+    bindEvents() {
+        document.getElementById('btn-prev')
+            .addEventListener('click', () => this.playPrev());
+        document.getElementById('btn-next')
+            .addEventListener('click', () => this.playNext());
+        document.getElementById('btn-order')
+            .addEventListener('click', () => this.setMode('order'));
+        document.getElementById('btn-shuffle')
+            .addEventListener('click', () => this.setMode('shuffle'));
+        document.getElementById('btn-toggle-video')
+            .addEventListener('click', () => this.toggleVideo());
+        document.getElementById('btn-add-song')
+            .addEventListener('click', () => this.elements.addPanel.classList.toggle('visible'));
+        document.getElementById('btn-add-confirm')
+            .addEventListener('click', () => this.addSong());
+        document.getElementById('btn-reset')
+            .addEventListener('click', () => this.resetSongs());
+        document.getElementById('btn-skip-error')
+            .addEventListener('click', () => this.playNext());
+
+        document.addEventListener('keydown', e => {
+            if (e.target.tagName === 'INPUT') return;
+            if (e.key === 'ArrowRight') this.playNext();
+            if (e.key === 'ArrowLeft')  this.playPrev();
+        });
+    },
+
+    saveSongs() {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.state.songs));
+    },
+    loadSongs() {
+        try {
+            const saved = localStorage.getItem(this.STORAGE_KEY);
+            if (saved) this.state.songs = JSON.parse(saved);
+        } catch(err) { console.error(err); }
+    },
+
+    buildPlaylist() {
+        this.state.playlist = [...Array(this.state.songs.length).keys()];
+        if (this.state.mode === 'shuffle') this.shuffle(this.state.playlist);
+    },
+    shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+    },
+    setMode(mode) {
+        this.state.mode = mode;
+        this.buildPlaylist();
+        this.elements.modeLabel.textContent =
+            mode === 'shuffle' ? '🔀 Shuffling' : '▶ Playing in order';
+        this.elements.btnOrder.style.background   = mode === 'order'   ? '#c00' : '#333';
+        this.elements.btnShuffle.style.background = mode === 'shuffle' ? '#c00' : '#333';
+    },
+
+    renderSongs() {
+        const container = this.elements.songList;
+        container.querySelectorAll('.song-card,.section-header').forEach(el => el.remove());
+        this.state.songs.forEach((song, index) => {
+            if (song.section) {
+                const hdr = document.createElement('div');
+                hdr.className = 'section-header';
+                hdr.textContent = song.section;
+                container.appendChild(hdr);
+            }
+            container.appendChild(this.createSongCard(song, index));
+        });
+    },
+
+    createSongCard(song, index) {
+        const card = document.createElement('div');
+        card.className = 'song-card';
+        card.dataset.idx = index;
+        card.addEventListener('click', () => this.playSong(index));
+
+        const rank = document.createElement('span');
+        rank.className = 'rank';
+        rank.textContent = index + 1;
+
+        const img = document.createElement('img');
+        img.className = 'thumb';
+        img.src = `https://img.youtube.com/vi/${song.vid}/mqdefault.jpg`;
+        img.alt = song.title;
+        img.loading = 'lazy';
+
+        const info = document.createElement('div');
+        info.className = 'song-info';
+
+        const title = document.createElement('div');
+        title.className = 'song-title';
+        title.textContent = song.title;
+
+        const meta = document.createElement('div');
+        meta.className = 'song-meta';
+        meta.textContent = song.meta || '';
+
+        const del = document.createElement('button');
+        del.className = 'delete-btn';
+        del.textContent = '🗑';
+        del.addEventListener('click', e => {
+            e.stopPropagation();
+            this.deleteSong(index);
+        });
+
+        info.append(title, meta);
+        card.append(rank, img, info, del);
+        return card;
+    },
+
+    playSong(index) {
+        this.elements.overlay.classList.remove('visible');
+        const song = this.state.songs[index];
+        this.state.currentPos = this.state.playlist.indexOf(index);
+        this.elements.playerTitle.textContent = song.title;
+        if (this.state.player) this.state.player.loadVideoById(song.vid);
+        document.querySelectorAll('.song-card').forEach(x => x.classList.remove('active'));
+        const card = document.querySelector(`[data-idx="${index}"]`);
+        if (card) {
+            card.classList.add('active');
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    },
+
+    playNext() {
+        const s = this.state;
+        s.currentPos = (s.currentPos + 1) % s.playlist.length;
+        this.playSong(s.playlist[s.currentPos]);
+    },
+
+    playPrev() {
+        const s = this.state;
+        if (s.currentPos === -1) { this.playSong(0); return; }
+        s.currentPos = (s.currentPos - 1 + s.playlist.length) % s.playlist.length;
+        this.playSong(s.playlist[s.currentPos]);
+    },
+
+    deleteSong(index) {
+        if (this.state.playlist[this.state.currentPos] === index) this.stopAdCheck();
+        const curSongIdx = this.state.playlist[this.state.currentPos];
+        this.state.songs.splice(index, 1);
+        this.buildPlaylist();
+        const adjusted = curSongIdx > index ? curSongIdx - 1 : curSongIdx;
+        this.state.currentPos = this.state.playlist.indexOf(adjusted);
+        this.saveSongs();
+        this.renderSongs();
+    },
+
+    parseVideoId(input) {
+        const regex = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([^?&/]{11})/;
+        return input.match(regex)?.[1] || input.trim();
+    },
+
+    addSong() {
+        const vid     = this.parseVideoId(this.elements.inpURL.value);
+        const title   = this.elements.inpTitle.value.trim();
+        const meta    = this.elements.inpMeta.value.trim();
+        const section = this.elements.inpSection.value.trim();
+
+        if (!vid || vid.length !== 11) { alert('Please enter a valid YouTube URL or 11-character Video ID'); return; }
+        if (!title)                    { alert('Please enter a song title'); return; }
+
+        const entry = { vid, title, meta };
+        if (section) entry.section = section;
+
+        this.state.songs.push(entry);
+        this.buildPlaylist();
+        this.saveSongs();
+        this.renderSongs();
+
+        [this.elements.inpURL, this.elements.inpTitle,
+         this.elements.inpMeta, this.elements.inpSection]
+            .forEach(el => el.value = '');
+        this.elements.addPanel.classList.remove('visible');
+    },
+
+    startAdCheck() {
+        this.stopAdCheck();
+        this._adInterval = setInterval(() => {
+            const p = this.state.player;
+            if (!p || typeof p.getPlayerState !== 'function') return;
+            if (p.getPlayerState() !== YT.PlayerState.PLAYING) return;
+            try {
+                const duration = p.getDuration();
+                const current  = p.getCurrentTime();
+                if (duration > 0 && duration <= 60 && current < duration - 1) {
+                    this.elements.adStatus.style.display = 'inline';
+                    p.seekTo(duration, true);
+                } else {
+                    this.elements.adStatus.style.display = 'none';
+                }
+            } catch(_) {}
+        }, 800);
+    },
+
+    stopAdCheck() {
+        if (this._adInterval) {
+            clearInterval(this._adInterval);
+            this._adInterval = null;
+        }
+        if (this.elements.adStatus) this.elements.adStatus.style.display = 'none';
+    },
+
+    toggleVideo() {
+        const hidden = this.elements.wrapper.classList.toggle('hidden-video');
+        this.elements.btnToggleVideo.textContent = hidden ? '📺 Show Video' : '🎵 Audio Only';
+    },
+
+    resetSongs() {
+        if (!confirm('Reset to default playlist? All additions / deletions will be cleared.')) return;
+        this.state.songs = structuredClone(this.state.defaultSongs);
+        localStorage.removeItem(this.STORAGE_KEY);
+        this.state.currentPos = -1;
+        this.buildPlaylist();
+        this.renderSongs();
+    },
+};
+
+function onYouTubeIframeAPIReady() {
+    App.state.player = new YT.Player('ytplayer', {
+        playerVars: { autoplay: 1, rel: 0 },
+        events: {
+            onReady: () => App.playSong(0),
+            onStateChange: e => {
+                if (e.data === YT.PlayerState.PLAYING) {
+                    App.startAdCheck();
+                } else if (e.data === YT.PlayerState.ENDED) {
+                    App.stopAdCheck();
+                    setTimeout(() => App.playNext(), 1000);
+                } else {
+                    App.stopAdCheck();
+                }
+            },
+            onError: e => {
+                if (e.data === 150 || e.data === 153) {
+                    const vid = App.state.songs[App.state.playlist[App.state.currentPos]].vid;
+                    App.elements.btnWatchYt.href = 'https://www.youtube.com/watch?v=' + vid;
+                    App.elements.overlay.classList.add('visible');
+                }
+            }
+        }
+    });
+}
+
+App.init(SONGS);
+</script>
+</body>
+</html>
